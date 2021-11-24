@@ -13,7 +13,7 @@ if __name__ == '__main__':
     IN_DIR, OUT_DIR = env.io_dir(user=os.environ.get("USER"))
     U, Q, D = env.uqd(user=os.environ.get("USER"))
 
-    MAKE_BG_FLAG = False  # for skip making background image process
+    MAKE_BG_FLAG = True  # for skip making background image process
     SUB_BG_FLAG = True  # for skip background subtraction process
     GET_TH_FLAG = True  # for skip get threshold process
     N_ARY_FLAG = True  # for skip n-ary encoding process

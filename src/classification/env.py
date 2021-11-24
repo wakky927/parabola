@@ -17,8 +17,8 @@ def io_dir(user):
 def uqd(user):
     if user == "lfc":
         U = [175, 200, 225, 250]
-        Q = [215, 429]
-        D = [24, 30]
+        Q = [215, 304, 429]
+        D = [18, 24, 30]
 
     elif user == "phi":
         U = []

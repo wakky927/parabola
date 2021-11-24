@@ -21,5 +21,5 @@ def sub_bg(u, q, d, i, freq):
         sub_img, freq = ip.sub_bg(bg=bg, img=img, freq=freq, L=env.L)
 
         # save sub img
-        cv2.imwrite(OUT_DIR + f"bg_sub/{u}/{q}/{d}/{i:08}.bmp", sub_img)
-        np.savetxt(OUT_DIR + f"bg_sub/{u}/{q}/{d}/{i:08}.csv", sub_img, delimiter=',')
+        cv2.imwrite(OUT_DIR + f"bg_sub/{u}/{q}/{d}/{j:08}.bmp", sub_img)
+        np.savetxt(OUT_DIR + f"bg_sub/{u}/{q}/{d}/{j:08}.csv", sub_img, delimiter=',')
