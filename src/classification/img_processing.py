@@ -5,11 +5,20 @@ def make_bg(bg, img):
     return np.minimum(bg, img)
 
 
-def sub_bg(bg, img):
-    return img - bg
+def sub_bg(bg, img, freq, L):
+    sub_img = img - bg
+
+    # normalization: [0:255]
+    sub_img = (sub_img - np.min(sub_img)) / (np.max(sub_img) - np.min(sub_img)) * 255
+    sub_img = np.uint(sub_img)
+
+    for k in range(L+1):
+        freq[k] += np.count_nonzero(sub_img == k)
+
+    return sub_img, freq
 
 
-def get_threshold(freq, N, classes):
+def get_threshold(freq, N, classes, L=255):
     """
     The threshold values are chosen to maximize the total sum of pairwise
     variances between the thresholded gray-level classes. See Notes and [1]_
@@ -19,9 +28,13 @@ def get_threshold(freq, N, classes):
     :param
         freq: (L + 1) ndarray
             Frequency array.
+        N: int
+            Total pixels
         classes: int
             Number of classes to be thresholded, i.e. the number of
             resulting regions.
+        L: int
+            Maximum gray level
     :return
         sigma_max: float
             max(sigma)
@@ -37,8 +50,6 @@ def get_threshold(freq, N, classes):
            <https://ftp.iis.sinica.edu.tw/JISE/2001/200109_01.pdf>
            :DOI:`10.6688/JISE.2001.17.5.1`
     """
-
-    L = 255  # max gray-level
 
     fi = freq  # frequency: Sum[i=0, 255] fi[i] = N (= wid * hei)
     pi = np.zeros(L + 1)  # probability: Sum[i=0, 255] pi[i] = 1
@@ -143,41 +154,40 @@ def get_threshold(freq, N, classes):
     return sigma_max, variances, th
 
 
-def n_ary_encoding(im, th, m=0):
+def n_ary_encoding(img, th, L=255, m=0):
     classes = len(th) + 1
-    th_im = im.copy()
-    L = 255
+    th_im = img.copy()
 
     l = np.linspace(0, L, classes, dtype=int)
 
     if classes == 2:
-        th_im[im < th[0]] = l[0]
-        th_im[th[0] <= im] = l[1]
+        th_im[img < th[0]] = l[0]
+        th_im[th[0] <= img] = l[1]
 
     elif classes == 3:
-        th_im[im < th[0]] = l[0]
-        th_im[(th[0] <= im) & (im < th[1])] = l[1]
-        th_im[th[1] <= im] = l[2]
+        th_im[img < th[0]] = l[0]
+        th_im[(th[0] <= img) & (img < th[1])] = l[1]
+        th_im[th[1] <= img] = l[2]
 
     elif classes == 4:
         if m == 1:
-            th_im[im < th[0]] = l[0]
-            th_im[(th[0] <= im) & (im < th[1])] = l[1]
-            th_im[(th[1] <= im) & (im < th[2])] = l[0]
-            th_im[th[2] <= im] = l[0]
+            th_im[img < th[0]] = l[0]
+            th_im[(th[0] <= img) & (img < th[1])] = l[1]
+            th_im[(th[1] <= img) & (img < th[2])] = l[0]
+            th_im[th[2] <= img] = l[0]
 
         else:
-            th_im[im < th[0]] = l[0]
-            th_im[(th[0] <= im) & (im < th[1])] = l[1]
-            th_im[(th[1] <= im) & (im < th[2])] = l[2]
-            th_im[th[2] <= im] = l[3]
+            th_im[img < th[0]] = l[0]
+            th_im[(th[0] <= img) & (img < th[1])] = l[1]
+            th_im[(th[1] <= img) & (img < th[2])] = l[2]
+            th_im[th[2] <= img] = l[3]
 
     elif classes == 5:
-        th_im[im < th[0]] = l[0]
-        th_im[(th[0] <= im) & (im < th[1])] = l[1]
-        th_im[(th[1] <= im) & (im < th[2])] = l[2]
-        th_im[(th[2] <= im) & (im < th[3])] = l[3]
-        th_im[th[3] <= im] = l[4]
+        th_im[img < th[0]] = l[0]
+        th_im[(th[0] <= img) & (img < th[1])] = l[1]
+        th_im[(th[1] <= img) & (img < th[2])] = l[2]
+        th_im[(th[2] <= img) & (img < th[3])] = l[3]
+        th_im[th[3] <= img] = l[4]
 
     else:
         return None

@@ -35,3 +35,12 @@ def uqd(user):
 
 def file_name(u, q, d, i):
     return f"u_{u}_q_{q}_d_{d}_ppm_0_CR600x2 1836-ST-C-086_{i:08}.bmp"
+
+
+T = 8
+
+N = 1000
+HEIGHT, WIDTH = 1024, 1280
+CLASSES = 4
+
+L = 255
