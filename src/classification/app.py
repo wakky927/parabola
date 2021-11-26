@@ -13,10 +13,12 @@ if __name__ == '__main__':
     IN_DIR, OUT_DIR = env.io_dir(user=os.environ.get("USER"))
     U, Q, D = env.uqd(user=os.environ.get("USER"))
 
-    MAKE_BG_FLAG = True  # for skip making background image process
-    SUB_BG_FLAG = True  # for skip background subtraction process
-    GET_TH_FLAG = True  # for skip get threshold process
-    N_ARY_FLAG = True  # for skip n-ary encoding process
+    MAKE_BG_FLAG = False  # for skip making background image process
+    SUB_BG_FLAG = False  # for skip background subtraction process
+    GET_TH_FLAG = False  # for skip get threshold process
+    N_ARY_FLAG = False  # for skip n-ary encoding process
+    N_ARY_FLAG = False  # for skip n-ary encoding process
+    FREQ_CNT_FLAG = True  # for particle frequency count process
 
     threads = []
 
@@ -83,3 +85,17 @@ if __name__ == '__main__':
                         # save n-ary img
                         cv2.imwrite(OUT_DIR + f"n_ary/{u}/{q}/{d}/{i:08}.bmp", n_ary_img)
                         np.savetxt(OUT_DIR + f"n_ary/{u}/{q}/{d}/{i:08}.csv", n_ary_img, delimiter=',')
+
+                if FREQ_CNT_FLAG:
+                    print(f"[{u}, {q}, {d}] particle frequency count process")
+
+                    freq_data = np.zeros((env.HEIGHT, env.WIDTH))
+
+                    for i in range(env.N):
+                        n_ary_img = np.loadtxt(OUT_DIR + f"n_ary/{u}/{q}/{d}/{i:08}.csv", delimiter=',')
+                        freq_data += np.where(n_ary_img == env.L/4, 1, 0)
+
+                    freq_data /= env.N
+
+                    # save freq data
+                    np.savetxt(OUT_DIR + f"freq_cnt/{u}/{q}/{d}/{i:08}.csv", freq_data, delimiter=',')
