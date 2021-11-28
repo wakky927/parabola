@@ -3,6 +3,7 @@ import threading
 
 import cv2
 import numpy as np
+from tqdm import tqdm
 
 import env
 import img_processing as ip
@@ -20,11 +21,11 @@ if __name__ == '__main__':
     N_ARY_FLAG = False  # for skip n-ary encoding process
     FREQ_CNT_FLAG = True  # for particle frequency count process
 
-    threads = []
-
     for u in U:
         for q in Q:
             for d in D:
+                threads = []
+
                 # for get threshold process
                 freq = np.zeros(env.L+1)
                 freq_t = np.zeros((env.T, env.L+1))
@@ -78,7 +79,7 @@ if __name__ == '__main__':
                     threshold = np.loadtxt(OUT_DIR + f"threshold/th_u_{u}_q_{q}_d_{d}_ppm_0.csv", delimiter=',')
 
                     # n-ary encoding
-                    for i in range(env.N):
+                    for i in tqdm(range(env.N)):
                         sub_img = cv2.imread(OUT_DIR + f"bg_sub/{u}/{q}/{d}/{i:08}.bmp", 0)
                         n_ary_img = ip.n_ary_encoding(img=sub_img, th=threshold)
 
@@ -93,9 +94,9 @@ if __name__ == '__main__':
 
                     for i in range(env.N):
                         n_ary_img = np.loadtxt(OUT_DIR + f"n_ary/{u}/{q}/{d}/{i:08}.csv", delimiter=',')
-                        freq_data += np.where(n_ary_img == env.L/4, 1, 0)
+                        freq_data += np.where(n_ary_img == env.L/3, 1, 0)
 
                     freq_data /= env.N
 
                     # save freq data
-                    np.savetxt(OUT_DIR + f"freq_cnt/{u}/{q}/{d}/{i:08}.csv", freq_data, delimiter=',')
+                    np.savetxt(OUT_DIR + f"freq_cnt/freq_cnt_u_{u}_q_{q}_d_{d}_ppm_0.csv", freq_data, delimiter=',')
