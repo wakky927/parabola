@@ -3,10 +3,14 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
+import torch
 from tqdm import tqdm
+
+from optimize import calc as c
 
 
 BINARY_DIR = '../../data/binary/'
+BOUNDARY_DIR = '../../data/boundary/'
 RESULT_DIR = '../../data/result/'
 
 
@@ -46,7 +50,7 @@ def parabola_fit(data):
         _y = np.zeros_like(_x)
 
         for _i, _param in enumerate(params):
-            _y += np.array(_param * _x ** _i)
+            _y += _param * _x ** _i
 
         return _y
 
@@ -64,16 +68,103 @@ def parabola_fit(data):
             a = np.append(a, data[i, 0])
             b = np.append(b, data[i, 2])
 
-    p, cov = curve_fit(_parabola, b[1:], a[1:], p0=[1, 1, 1])
+    po, pc = curve_fit(_parabola, b[1:], a[1:], p0=[1, 1, 1])
 
-    return p, cov, a, b
+    return po, pc, a, b
+
+
+def parabola_fit_adam(data):
+    a = np.zeros(1)
+    b = np.zeros(1)
+
+    for i in range(data.shape[0]):
+        # left boundary
+        if data[i, 3] == 1:
+            a = np.append(a, data[i, 0])
+            b = np.append(b, data[i, 1])
+
+        # right boundary
+        if data[i, 4] == 1:
+            a = np.append(a, data[i, 0])
+            b = np.append(b, data[i, 2])
+
+    p = c.my_adam(b[1:], a[1:])
+
+    return p, a, b
 
 
 def m_fit(v, a, b):
     def _model_func_m_xy(_x, _m):
         return _x / np.tan(np.pi - v * _x / _m)
 
-    return curve_fit(_model_func_m_xy, b, a, p0=[3500])
+    return curve_fit(_model_func_m_xy, b, a, p0=[100])
+
+
+def check_parabola_fitting(u, q, d, popt, a, b):
+    fig, ax = plt.subplots(figsize=(12, 10))
+    plt.xlabel('$\it{x}$ [px]', fontsize=28)
+    plt.ylabel('$\it{y}$ [px]', fontsize=28)
+    plt.title(f"[u, q, d] = [{u}, {q}, {d}]")
+    plt.xticks(fontsize=24)
+    plt.yticks(fontsize=24)
+    plt.xlim(0, 1280)
+    plt.ylim(1024, 0)
+    plt.grid()
+
+    x = np.linspace(0, 1280 - 1, 1280)
+    y = popt[0] + popt[1] * x + popt[2] * x ** 2
+
+    plt.plot(x, y, color='r', linewidth=3)
+    plt.scatter(b[1:], a[1:], c='k')
+
+    plt.show()
+
+
+def check_parabola_fitting2(popt, a, b):
+    fig, ax = plt.subplots(figsize=(12, 10))
+    plt.xlabel('$\it{x}$ [px]', fontsize=28)
+    plt.ylabel('$\it{y}$ [px]', fontsize=28)
+    plt.xticks(fontsize=24)
+    plt.yticks(fontsize=24)
+    plt.xlim(0 + popt[1] / popt[2] / 2, 1280 + popt[1] / popt[2] / 2)
+    plt.ylim(-(1024 + (popt[1]**2 - 4 * popt[2] * popt[0]) / popt[2] / 4), -(0 + (popt[1]**2 - 4 * popt[2] * popt[0]) / popt[2] / 4))
+    plt.grid()
+
+    x = np.linspace(0, 1280 - 1, 1280)
+    y = popt[0] + popt[1] * x + popt[2] * x ** 2
+
+    x += popt[1] / popt[2] / 2
+    y += (popt[1]**2 - 4 * popt[2] * popt[0]) / popt[2] / 4
+    a += popt[1] / popt[2] / 2
+    b += (popt[1]**2 - 4 * popt[2] * popt[0]) / popt[2] / 4
+
+    plt.plot(x, -y, color='r', linewidth=3)
+    plt.scatter(b[1:], -a[1:], c='k')
+
+    plt.show()
+
+
+def check_fitting(u, q, d, m, a, b):
+    fig, ax = plt.subplots(figsize=(12, 10))
+    plt.xlabel('$\it{x}$ [mm]', fontsize=28)
+    plt.ylabel('$\it{y}$ [mm]', fontsize=28)
+    plt.title(f"[u, q, d] = [{u}, {q}, {d}]")
+    plt.xticks(fontsize=24)
+    plt.yticks(fontsize=24)
+    plt.xlim(0, 1280)
+    plt.ylim(1024, 0)
+    # plt.xlim(-100, 100)
+    # plt.ylim(-1, 120)
+    plt.grid()
+
+    theta_original = np.linspace(0, 2 * np.pi, 1001)
+    theta = np.append(theta_original[1:500], theta_original[501:-1])
+    r = m * (np.pi - theta) / u / np.sin(theta)
+
+    plt.plot(r * np.sin(theta), r * np.cos(theta) + m / u, color='r', linewidth=3)
+
+    plt.scatter(b[1:], a[1:], c='k')
+    plt.show()
 
 
 def fit():
@@ -105,22 +196,32 @@ def fit():
                 boundary = detect_boundary(img=bin_img, hei=1024, wid=1280)
 
                 # parabola fitting
-                popt_p, pcov_p, A, B = parabola_fit(boundary[200:])
+                popt_p, _, A, B = parabola_fit(boundary)
 
-                A += popt_p[1] / popt_p[2] / 2
-                B += (popt_p[1] ** 2 - 4 * popt_p[2] * popt_p[0]) / popt_p[2] / 4
-                A *= -px2mm
-                B *= px2mm
+                # save boundary
+                np.savetxt(BOUNDARY_DIR + f'u_{u}_q_{q}_d_{d}.csv', np.array([A, B]), delimiter=',')
+
+                # check parabola fitting
+                # check_parabola_fitting(u, q, d, popt_p, A, B)
+                # check_parabola_fitting2(popt_p, A, B)
+
+                # A += popt_p[1] / popt_p[2] / 2
+                # B += (popt_p[1] ** 2 - 4 * popt_p[2] * popt_p[0]) / popt_p[2] / 4
+                # A *= -px2mm
+                # B *= px2mm
 
                 # m fitting
-                popt_m, pcov_m = m_fit(u, A, B)
+                # popt_m, pcov_m = m_fit(u, A[A > 300], B[A > 300])
 
-                # save tmp result
-                m_list = np.append(m_list, popt_m[0])
-                m_sd_list = np.append(m_sd_list, np.sqrt(pcov_m[0]))
+                # check fitting
+                # check_fitting(u, q, d, popt_m[0], A[A > 300], B[A > 300])
+                #
+                # # save tmp result
+                # m_list = np.append(m_list, popt_m[0])
+                # m_sd_list = np.append(m_sd_list, np.sqrt(pcov_m[0]))
 
     # save result
-    np.savetxt(RESULT_DIR + 'm_fitting_result.csv', np.array([m_list, m_sd_list]), delimiter=',')
+    # np.savetxt(RESULT_DIR + 'm_fitting_result.csv', np.array([m_list, m_sd_list]), delimiter=',')
 
 
 def load_result():
@@ -178,7 +279,7 @@ def graph_d_180(m_list, m_sd_list):
 
 if __name__ == '__main__':
     fit()
-    results = load_result()
-    graph_d_180(results[0], results[1])
+    # results = load_result()
+    # graph_d_180(results[0], results[1])
 
     print(0)
