@@ -141,7 +141,7 @@ def load_result():
 def graph_d_180(m_list, mode):
     fig, ax = plt.subplots(figsize=(18, 10))
     plt.xlabel('$\it{U}$ [mm/s]', fontsize=32)
-    plt.ylabel('$\it{m}$ [mm$^{2}$]', fontsize=32)
+    plt.ylabel('$\it{m}$ [mm$^{2}/s$]', fontsize=32)
     plt.xticks(fontsize=32)
     plt.yticks(fontsize=32)
     plt.xlim(170, 255)
@@ -178,7 +178,7 @@ def graph_d_180(m_list, mode):
 def graph_d_240(m_list, mode):
     fig, ax = plt.subplots(figsize=(18, 10))
     plt.xlabel('$\it{U}$ [mm/s]', fontsize=32)
-    plt.ylabel('$\it{m}$ [mm$^{2}$]', fontsize=32)
+    plt.ylabel('$\it{m}$ [mm$^{2}/s$]', fontsize=32)
     plt.xticks(fontsize=32)
     plt.yticks(fontsize=32)
     plt.xlim(170, 255)
@@ -215,7 +215,7 @@ def graph_d_240(m_list, mode):
 def graph_d_300(m_list, mode):
     fig, ax = plt.subplots(figsize=(18, 10))
     plt.xlabel('$\it{U}$ [mm/s]', fontsize=32)
-    plt.ylabel('$\it{m}$ [mm$^{2}$]', fontsize=32)
+    plt.ylabel('$\it{m}$ [mm$^{2}$/s]', fontsize=32)
     plt.xticks(fontsize=32)
     plt.yticks(fontsize=32)
     plt.xlim(170, 255)
@@ -250,7 +250,7 @@ def graph_d_300(m_list, mode):
 
 
 if __name__ == '__main__':
-    fit()
+    # fit()
     results = load_result()
     graph_d_180(results, mode="save")
     graph_d_240(results, mode="save")

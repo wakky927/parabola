@@ -79,7 +79,7 @@ def main():
         for q in q_list:
             for d in d_list:
                 data_dg = load_pp(u, q, d, mode="dg")
-                # data_lg = load_pp(u, q, d, mode="lg")
+                data_lg = load_pp(u, q, d, mode="lg")
 
                 x0_y0 = np.loadtxt(SHIFT_DIR + "x0_y0.csv", delimiter=',')
                 x0, y0 = x0_y0[i, 0], x0_y0[i, 1]
@@ -87,7 +87,10 @@ def main():
                 a, b = curve(u, m[i], x0, y0, px2mm)
 
                 fig = draw_pp(data_dg, a, b, px2mm, mode="save")
-                fig.savefig(PP_DIR + f"u_{u}_q_{q}_d_{d}.png", dpi=300, bbox_inches='tight')
+                fig.savefig(PP_DIR + f"dg/u_{u}_q_{q}_d_{d}.png", dpi=300, bbox_inches='tight')
+
+                fig = draw_pp(data_lg, a, b, px2mm, mode="save")
+                fig.savefig(PP_DIR + f"lg/u_{u}_q_{q}_d_{d}.png", dpi=300, bbox_inches='tight')
 
                 i += 1
 
